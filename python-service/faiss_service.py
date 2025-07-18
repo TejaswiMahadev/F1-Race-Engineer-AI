@@ -11,22 +11,29 @@ from langchain_google_genai import (
     GoogleGenerativeAIEmbeddings
 )
 
-# Set up environment variables
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBYLsFMvt68jRG8-_L0i48qc4eFs5K---U"
+# Get environment variables
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+PORT = int(os.environ.get("PORT", 5000))
+
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY environment variable is required")
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for Next.js communication
+CORS(app)  # Enable CORS for Vercel communication
 
 class FAISSService:
     def __init__(self, index_path=None):
         """Initialize FAISS service with your existing knowledge base"""
         if index_path is None:
-            index_path = os.environ.get("FAISS_INDEX_PATH", "../index")
+            index_path = os.environ.get("FAISS_INDEX_PATH", "./index")
         try:
             print("🔧 Initializing FAISS service...")
             
             # Initialize embeddings (same as your Python app)
-            self.embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+            self.embedding = GoogleGenerativeAIEmbeddings(
+                model="models/embedding-001",
+                google_api_key=GOOGLE_API_KEY
+            )
             
             # Load your existing FAISS vectorstore
             self.vectorstore = FAISS.load_local(
@@ -42,6 +49,7 @@ class FAISSService:
             self.llm = ChatGoogleGenerativeAI(
                 model="gemini-2.0-flash",
                 temperature=0.2,
+                google_api_key=GOOGLE_API_KEY,
                 system_message=(
                     "You are a Formula 1 Race Engineer AI. "
                     "Answer queries based on official FIA documents and race radio transcripts from the 2025 season. "
@@ -265,11 +273,11 @@ def similarity_search():
 
 if __name__ == '__main__':
     print("🏁 Starting FAISS Microservice for F1 Race Engineer AI")
-    print("🔧 Service will be available at http://localhost:5000")
+    print(f"🔧 Service will be available at http://0.0.0.0:{PORT}")
     print("📚 Endpoints:")
     print("  - GET  /health - Health check")
     print("  - POST /query - Main knowledge base query")
     print("  - GET  /info - Vectorstore information")
     print("  - POST /similarity_search - Direct similarity search")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=PORT, debug=False)
