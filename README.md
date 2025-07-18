@@ -1,3 +1,4 @@
+
 # F1 Race Engineer AI - Next.js Version
 
 A comprehensive Formula 1 Race Engineer AI system converted from Python to Next.js, featuring dual-source validation with FAISS knowledge base and web search integration.
