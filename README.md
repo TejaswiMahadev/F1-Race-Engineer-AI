@@ -1,133 +1,117 @@
-
 # F1 Race Engineer AI - Next.js Version
 
-A comprehensive Formula 1 Race Engineer AI system converted from Python to Next.js, featuring dual-source validation with FAISS knowledge base and web search integration.
+A comprehensive Formula 1 Race Engineer AI system, converted from Python to Next.js, delivering advanced technical assistance for F1 topics. Features dual-source validation using a FAISS knowledge base and real-time web search integration for up-to-date, reliable answers.
 
 ## Features
 
-- **Dual-Source Validation**: Combines local knowledge base with current web search
-- **Quality Assessment**: Evaluates response quality from both sources
-- **Cross-Validation**: Compares and validates information between sources
-- **Context Management**: Tracks conversation history and user preferences
-- **Advanced Analytics**: Success rates, source statistics, and trending topics
-- **Responsive UI**: Modern interface with real-time chat and analytics
+- **Dual-Source Validation:** Answers combine a local knowledge base (FAISS) with current web search (SerpAPI) for accuracy.
+- **Quality Assessment:** Evaluates and scores responses from both sources before presenting to the user.
+- **Cross-Validation:** Automatically compares and merges information from knowledge base and web search.
+- **Context Management:** Tracks conversation history and user preferences for personalized answers.
+- **Advanced Analytics:** Reports success rates, source statistics, trending topics, and conversation metrics.
+- **Responsive UI:** Modern Next.js interface with real-time chat, analytics, and professional F1 branding.
+
+## Architecture
+
+- **Frontend:** Next.js 14 (App Router), React, Tailwind CSS.
+- **Backend:** Next.js API routes with Google Gemini integration.
+- **Knowledge Base:** FAISS vector database (Python microservice).
+- **Web Search:** SerpAPI for current F1 regulations, news, and updates.
+- **Validation:** Dual-source quality assessment and cross-validation algorithms.
+
+## Key Components
+
+- Main chat UI with analytics display.
+- Core AI processing and response validation.
+- Analytics and statistics endpoint.
+- FAISS knowledge base microservice.
+- Quality assessment, context management, and cross-validation logic.
+
+## Supported Languages & Technologies
+
+- **TypeScript** (main application logic)
+- **Python** (FAISS microservice)
+- **Next.js** (React frontend and backend)
+- **Tailwind CSS** (UI styling)
+- **FAISS** (vector search engine)
+- **SerpAPI** (web search integration)
+- **Google Gemini** (AI language model for reasoning and response)
 
 ## Setup Instructions
 
 ### 1. Environment Variables
 
-Create a `.env.local` file with:
-
-\`\`\`env
+Create a `.env.local` file in the project root:
+```env
 GOOGLE_API_KEY=your_google_api_key_here
 SERPAPI_API_KEY=your_serpapi_key_here
 FAISS_INDEX_PATH=./knowledge_base/index
-\`\`\`
+```
 
 ### 2. API Keys Required
 
-- **Google AI API Key**: Get from [Google AI Studio](https://makersuite.google.com/app/apikey)
-- **SerpAPI Key**: Get from [SerpAPI](https://serpapi.com/users/sign_up)
+- **Google AI API Key:** [Get from Google AI Studio](https://makersuite.google.com/app/apikey)
+- **SerpAPI Key:** [Get from SerpAPI](https://serpapi.com/users/sign_up)
 
 ### 3. FAISS Knowledge Base Integration
 
-To connect your existing FAISS knowledge base:
-
-1. **Install Python dependencies** in your project:
-   \`\`\`bash
-   pip install faiss-cpu langchain-community langchain-google-genai
-   \`\`\`
-
-2. **Create a Python service** (`scripts/faiss_service.py`):
-   ```python
-   import faiss
-   import pickle
-   from langchain_community.vectorstores import FAISS
-   from langchain_google_genai import GoogleGenerativeAIEmbeddings
-   
-   def query_faiss_kb(query, index_path="./knowledge_base/index"):
-       embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-       vectorstore = FAISS.load_local(index_path, embeddings, allow_dangerous_deserialization=True)
-       retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-       
-       docs = retriever.get_relevant_documents(query)
-       return [{"content": doc.page_content, "metadata": doc.metadata} for doc in docs]
-   \`\`\`
-
-3. **Create API endpoint** (`app/api/faiss/route.ts`):
-   \`\`\`typescript
-   import { spawn } from 'child_process'
-   
-   export async function POST(request: Request) {
-     const { query } = await request.json()
-     
-     return new Promise((resolve) => {
-       const python = spawn('python', ['scripts/faiss_service.py', query])
-       let result = ''
-       
-       python.stdout.on('data', (data) => {
-         result += data.toString()
-       })
-       
-       python.on('close', () => {
-         resolve(Response.json(JSON.parse(result)))
-       })
-     })
-   }
-   \`\`\`
+- **Install Python dependencies:**
+  ```bash
+  pip install faiss-cpu langchain-community langchain-google-genai
+  ```
+- **Create Python service (`python-service/faiss_service.py`):**  
+  This handles queries to your FAISS knowledge base using Google Gemini embeddings.
+- **Create Next.js API endpoint (`app/api/faiss/route.ts`):**  
+  Communicates with the Python service using child_process to query FAISS.
 
 ### 4. System Validation Settings (Internal)
 
-The system validation settings are kept internal and not exposed in the UI:
+- Quality thresholds (e.g., response length, F1 keyword density)
+- Source scoring algorithms (knowledge base vs web search)
+- Fallback triggers for reliability
+- Cross-validation and merge rules
 
-- **Quality thresholds**: Minimum response length, F1 keyword density
-- **Source reliability scoring**: KB vs Web preference algorithms  
-- **Fallback triggers**: When to use alternative sources
-- **Cross-validation rules**: How to compare and merge responses
+All validation logic is housed in API routes and dedicated algorithms.
 
-These settings are configured in the API routes and can be adjusted in:
-- `app/api/query/route.ts` - Main validation logic
-- Quality assessment functions
-- Source combination algorithms
+### 5. Additional Python Setup
+
+See `SETUP_GUIDE.md` for details on running the FAISS microservice:
+- Prepare your FAISS index (`index.faiss`, `index.pkl`)
+- Setup Python environment and dependencies
+- Run the Python service alongside Next.js app
 
 ## Usage
 
-1. **Start the development server**:
-   \`\`\`bash
+1. **Start the development server:**
+   ```bash
    npm run dev
-   \`\`\`
+   ```
+2. **Access the app:**  
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-2. **Access the application** at `http://localhost:3000`
-
-3. **Ask F1 questions** like:
+3. **Ask F1 questions:**  
    - "What are the current tire compound regulations for 2025?"
-   - "Explain the DRS activation zones for Monaco GP"
+   - "Explain the DRS activation zones for Monaco GP."
    - "What's the latest on Red Bull's aerodynamic updates?"
-
-## Architecture
-
-- **Frontend**: Next.js 14 with App Router, React, Tailwind CSS
-- **Backend**: Next.js API routes with Google Gemini integration
-- **Knowledge Base**: FAISS vector database (Python integration)
-- **Web Search**: SerpAPI for current information
-- **Validation**: Dual-source quality assessment and cross-validation
-
-## Key Components
-
-- `app/page.tsx` - Main chat interface with analytics
-- `app/api/query/route.ts` - Core AI processing logic
-- `app/api/stats/route.ts` - Analytics and statistics
-- Quality assessment functions
-- Context management system
-- Cross-validation algorithms
 
 ## Deployment
 
-Deploy to Vercel with environment variables configured in the dashboard.
+- Deploy seamlessly to [Vercel](https://vercel.com) (recommended).
+- Configure environment variables via the Vercel dashboard.
+- Both knowledge base and web search validation handled automatically.
 
-The system will automatically handle:
-- Knowledge base queries
-- Web search validation  
-- Response quality assessment
-- Cross-validation between sources
-- Analytics tracking
+
+**Note:** Please ensure Python microservice changes remain compatible with the Next.js API endpoints. Contributions to analytics and validation logic are especially welcome!
+
+
+## Maintainer
+
+- [TejaswiMahadev](https://github.com/TejaswiMahadev)
+
+## Live Demo
+
+- [F1 Race Engineer AI](https://f1-race-engineer-ai.vercel.app)
+
+---
+
+Professional F1 technical analysis with a comprehensive knowledge base and real-time information.
